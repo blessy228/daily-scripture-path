@@ -13,21 +13,46 @@ interface StatsDashboardProps {
 
 export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsDashboardProps) {
   const stats = useMemo(() => {
-    // Calculate chapters per book
-    const chaptersByBook = new Map<string, Set<string>>();
+    // Calculate chapters per book - store as numbers for range calculation
+    const chaptersByBook = new Map<string, Set<number>>();
     
     readings.forEach((reading) => {
       if (!chaptersByBook.has(reading.book_name)) {
         chaptersByBook.set(reading.book_name, new Set());
       }
       for (let ch = reading.start_chapter; ch <= reading.end_chapter; ch++) {
-        chaptersByBook.get(reading.book_name)!.add(`${ch}`);
+        chaptersByBook.get(reading.book_name)!.add(ch);
       }
     });
 
-    // Book progress with percentage
+    // Helper to format chapter ranges like "1-10, 15, 20-25"
+    const formatChapterRanges = (chapters: Set<number>): string => {
+      if (chapters.size === 0) return "";
+      const sorted = Array.from(chapters).sort((a, b) => a - b);
+      const ranges: string[] = [];
+      let start = sorted[0];
+      let end = sorted[0];
+
+      for (let i = 1; i <= sorted.length; i++) {
+        if (sorted[i] === end + 1) {
+          end = sorted[i];
+        } else {
+          if (start === end) {
+            ranges.push(`${start}`);
+          } else {
+            ranges.push(`${start}-${end}`);
+          }
+          start = sorted[i];
+          end = sorted[i];
+        }
+      }
+      return ranges.join(", ");
+    };
+
+    // Book progress with percentage and chapter ranges
     const bookProgress = BIBLE_BOOKS.map((book) => {
-      const readChapters = chaptersByBook.get(book.name)?.size || 0;
+      const readChaptersSet = chaptersByBook.get(book.name) || new Set<number>();
+      const readChapters = readChaptersSet.size;
       const percentage = Math.round((readChapters / book.chapters) * 100);
       return {
         name: book.name,
@@ -35,6 +60,7 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
         read: readChapters,
         percentage,
         testament: book.testament,
+        chapterRanges: formatChapterRanges(readChaptersSet),
       };
     }).filter((b) => b.read > 0);
 
@@ -151,13 +177,16 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
                   <div className="flex justify-between text-sm">
                     <span className="truncate">{book.name}</span>
                     <span className={book.percentage === 100 ? "text-success font-medium" : "text-muted-foreground"}>
-                      {book.percentage}%
+                      {book.read}/{book.chapters}
                     </span>
                   </div>
                   <Progress
                     value={book.percentage}
                     className="h-1.5"
                   />
+                  <p className="text-xs text-muted-foreground truncate">
+                    Ch. {book.chapterRanges}
+                  </p>
                 </div>
               ))}
             </div>

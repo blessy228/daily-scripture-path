@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ReadingEntry } from "@/hooks/useReadingProgress";
-import { BookOpen, Trash2, Calendar, Pencil } from "lucide-react";
+import { BookOpen, Trash2, Calendar, Pencil, Search } from "lucide-react";
 import { format } from "date-fns";
 import { EditReadingDialog } from "./EditReadingDialog";
 
@@ -14,8 +15,12 @@ interface RecentReadingsProps {
 }
 
 export function RecentReadings({ readings, onDelete, onEdit }: RecentReadingsProps) {
-  const recentReadings = readings.slice(0, 10);
   const [editingReading, setEditingReading] = useState<ReadingEntry | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredReadings = readings.filter((reading) =>
+    reading.book_name.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 20);
 
   return (
     <>
@@ -25,17 +30,26 @@ export function RecentReadings({ readings, onDelete, onEdit }: RecentReadingsPro
             <BookOpen className="w-5 h-5 text-primary" />
             Recent Readings
           </CardTitle>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by book name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          {recentReadings.length === 0 ? (
+          {filteredReadings.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No readings yet. Start your journey!</p>
+              <p>{searchQuery ? "No readings match your search" : "No readings yet. Start your journey!"}</p>
             </div>
           ) : (
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {recentReadings.map((reading) => (
+                {filteredReadings.map((reading) => (
                   <div
                     key={reading.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
