@@ -71,6 +71,14 @@ export function useReadingProgress() {
     }
   }, [user, fetchReadings, fetchStreak]);
 
+  // Helper to format date as YYYY-MM-DD in local timezone
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const addReading = async (
     readingDate: Date,
     bookName: string,
@@ -82,7 +90,7 @@ export function useReadingProgress() {
     if (!user) return { error: new Error("Not authenticated") };
 
     const chaptersCount = endChapter - startChapter + 1;
-    const dateStr = readingDate.toISOString().split("T")[0];
+    const dateStr = formatLocalDate(readingDate);
 
     const { error } = await supabase.from("reading_progress").insert({
       user_id: user.id,
@@ -107,31 +115,68 @@ export function useReadingProgress() {
   const updateStreak = async (readingDate: string) => {
     if (!user) return;
 
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const today = formatLocalDate(new Date());
+    const yesterday = formatLocalDate(new Date(Date.now() - 86400000));
+    
+    // Parse the dates for comparison
+    const readingDateObj = new Date(readingDate + 'T00:00:00');
+    const lastReadingDateObj = streak.last_reading_date 
+      ? new Date(streak.last_reading_date + 'T00:00:00') 
+      : null;
 
     let newStreak = streak.current_streak;
     
-    if (streak.last_reading_date === null) {
+    // If no previous reading, start streak at 1
+    if (!lastReadingDateObj) {
       newStreak = 1;
-    } else if (readingDate === today || readingDate === yesterday) {
-      if (streak.last_reading_date === yesterday || streak.last_reading_date === today) {
-        newStreak = readingDate !== streak.last_reading_date ? streak.current_streak + 1 : streak.current_streak;
+    } else {
+      // Calculate the difference in days between reading date and last reading date
+      const diffTime = readingDateObj.getTime() - lastReadingDateObj.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        // Same day, streak stays the same
+        newStreak = streak.current_streak;
+      } else if (diffDays === 1) {
+        // Consecutive day, increment streak
+        newStreak = streak.current_streak + 1;
+      } else if (diffDays === -1) {
+        // Reading for yesterday (backfilling), keep streak
+        newStreak = streak.current_streak;
       } else {
+        // Gap in reading, reset streak to 1
         newStreak = 1;
       }
     }
 
     const newLongest = Math.max(streak.longest_streak, newStreak);
 
-    await supabase
+    // Check if streak record exists
+    const { data: existingStreak } = await supabase
       .from("user_streaks")
-      .update({
-        current_streak: newStreak,
-        longest_streak: newLongest,
-        last_reading_date: readingDate,
-      })
-      .eq("user_id", user.id);
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingStreak) {
+      await supabase
+        .from("user_streaks")
+        .update({
+          current_streak: newStreak,
+          longest_streak: newLongest,
+          last_reading_date: readingDate,
+        })
+        .eq("user_id", user.id);
+    } else {
+      await supabase
+        .from("user_streaks")
+        .insert({
+          user_id: user.id,
+          current_streak: newStreak,
+          longest_streak: newLongest,
+          last_reading_date: readingDate,
+        });
+    }
   };
 
   const deleteReading = async (id: string) => {
