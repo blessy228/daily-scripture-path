@@ -16,6 +16,7 @@ export default function Dashboard() {
     streak,
     loading: progressLoading,
     addReading,
+    editReading,
     deleteReading,
     chaptersRead,
     progressPercentage,
@@ -88,7 +89,7 @@ export default function Dashboard() {
               </TabsList>
               
               <TabsContent value="readings" className="mt-4">
-                <RecentReadings readings={readings} onDelete={deleteReading} />
+                <RecentReadings readings={readings} onDelete={deleteReading} onEdit={editReading} />
               </TabsContent>
               
               <TabsContent value="planner" className="mt-4">
