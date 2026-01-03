@@ -177,7 +177,7 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
                   <div className="flex justify-between text-sm">
                     <span className="truncate">{book.name}</span>
                     <span className={book.percentage === 100 ? "text-success font-medium" : "text-muted-foreground"}>
-                      {book.read}/{book.chapters}
+                      {book.read}/{book.chapters} ({book.percentage}%)
                     </span>
                   </div>
                   <Progress
