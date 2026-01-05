@@ -121,6 +121,17 @@ export function useReadingProgress() {
   ) => {
     if (!user) return { error: new Error("Not authenticated") };
 
+    // Find the reading to check if it can be edited
+    const reading = readings.find(r => r.id === id);
+    if (reading) {
+      const createdAt = new Date(reading.created_at);
+      const now = new Date();
+      const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      if (hoursDiff > 24) {
+        return { error: new Error("Cannot edit entries older than 24 hours") };
+      }
+    }
+
     const chaptersCount = endChapter - startChapter + 1;
     const dateStr = formatLocalDate(readingDate);
 
@@ -207,8 +218,21 @@ export function useReadingProgress() {
       }, { onConflict: 'user_id' });
   };
 
+  const canModifyReading = (reading: ReadingEntry): boolean => {
+    const createdAt = new Date(reading.created_at);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 24;
+  };
+
   const deleteReading = async (id: string) => {
     if (!user) return { error: new Error("Not authenticated") };
+
+    // Find the reading to check if it can be deleted
+    const reading = readings.find(r => r.id === id);
+    if (reading && !canModifyReading(reading)) {
+      return { error: new Error("Cannot delete entries older than 24 hours") };
+    }
 
     const { error } = await supabase
       .from("reading_progress")
@@ -217,7 +241,9 @@ export function useReadingProgress() {
       .eq("user_id", user.id);
 
     if (!error) {
+      await recalculateStreak();
       await fetchReadings();
+      await fetchStreak();
     }
 
     return { error };
@@ -240,6 +266,7 @@ export function useReadingProgress() {
     addReading,
     editReading,
     deleteReading,
+    canModifyReading,
     chaptersRead,
     progressPercentage,
     dailyTarget,
