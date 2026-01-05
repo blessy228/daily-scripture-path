@@ -38,6 +38,7 @@ export function ProgressHeader({
         <Progress 
           value={progressPercentage} 
           className="h-3 bg-primary-foreground/20"
+          indicatorClassName="bg-primary-foreground/90"
         />
       </div>
 
