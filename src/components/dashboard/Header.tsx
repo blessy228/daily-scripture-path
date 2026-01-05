@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, LogOut, User } from "lucide-react";
+import { BookOpen, LogOut, User, Book } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,11 +32,15 @@ export function Header() {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 bg-popover">
             <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
               {user?.email}
             </div>
-            <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem className="cursor-pointer">
+              <Book className="w-4 h-4 mr-2" />
+              Bible
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive cursor-pointer">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </DropdownMenuItem>
