@@ -4,23 +4,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ReadingEntry } from "@/hooks/useReadingProgress";
-import { BookOpen, Trash2, Calendar, Pencil, Search } from "lucide-react";
+import { BookOpen, Trash2, Calendar, Pencil, Search, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { EditReadingDialog } from "./EditReadingDialog";
+import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RecentReadingsProps {
   readings: ReadingEntry[];
   onDelete: (id: string) => Promise<{ error: Error | null }>;
   onEdit: (id: string, bookName: string, startChapter: number, endChapter: number, readingDate: Date) => Promise<{ error: Error | null }>;
+  canModifyReading: (reading: ReadingEntry) => boolean;
 }
 
-export function RecentReadings({ readings, onDelete, onEdit }: RecentReadingsProps) {
+export function RecentReadings({ readings, onDelete, onEdit, canModifyReading }: RecentReadingsProps) {
   const [editingReading, setEditingReading] = useState<ReadingEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredReadings = readings.filter((reading) =>
     reading.book_name.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 20);
+
+  const handleDelete = async (reading: ReadingEntry) => {
+    if (!canModifyReading(reading)) {
+      toast.error("Cannot delete entries older than 24 hours");
+      return;
+    }
+    const { error } = await onDelete(reading.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Reading deleted");
+    }
+  };
+
+  const handleEditClick = (reading: ReadingEntry) => {
+    if (!canModifyReading(reading)) {
+      toast.error("Cannot edit entries older than 24 hours");
+      return;
+    }
+    setEditingReading(reading);
+  };
 
   return (
     <>
@@ -49,46 +73,66 @@ export function RecentReadings({ readings, onDelete, onEdit }: RecentReadingsPro
           ) : (
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {filteredReadings.map((reading) => (
-                  <div
-                    key={reading.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">
-                          {reading.book_name} {reading.start_chapter}
-                          {reading.start_chapter !== reading.end_chapter && `-${reading.end_chapter}`}
-                        </p>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(reading.reading_date + 'T00:00:00'), "MMM d, yyyy")}
+                {filteredReadings.map((reading) => {
+                  const canModify = canModifyReading(reading);
+                  return (
+                    <div
+                      key={reading.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {reading.book_name} {reading.start_chapter}
+                            {reading.start_chapter !== reading.end_chapter && `-${reading.end_chapter}`}
+                          </p>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(reading.reading_date + 'T00:00:00'), "MMM d, yyyy")}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1">
+                        {canModify ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-primary"
+                              onClick={() => handleEditClick(reading)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => handleDelete(reading)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="p-2 text-muted-foreground/50">
+                                  <Lock className="w-4 h-4" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Cannot modify after 24 hours</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={() => setEditingReading(reading)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => onDelete(reading.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
           )}

@@ -18,6 +18,7 @@ export default function Dashboard() {
     addReading,
     editReading,
     deleteReading,
+    canModifyReading,
     chaptersRead,
     progressPercentage,
     dailyTarget,
@@ -89,7 +90,7 @@ export default function Dashboard() {
               </TabsList>
               
               <TabsContent value="readings" className="mt-4">
-                <RecentReadings readings={readings} onDelete={deleteReading} onEdit={editReading} />
+                <RecentReadings readings={readings} onDelete={deleteReading} onEdit={editReading} canModifyReading={canModifyReading} />
               </TabsContent>
               
               <TabsContent value="planner" className="mt-4">
