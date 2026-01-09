@@ -36,7 +36,10 @@ export function Header() {
             <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
               {user?.email}
             </div>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => window.open('https://www.biblegateway.com/', '_blank')}
+            >
               <Book className="w-4 h-4 mr-2" />
               Bible
             </DropdownMenuItem>
