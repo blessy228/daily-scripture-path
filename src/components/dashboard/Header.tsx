@@ -26,31 +26,37 @@ export function Header() {
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover">
-            <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
-              {user?.email}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
+            onClick={() => navigate('/bible')}
+          >
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <Book className="w-5 h-5 text-primary" />
             </div>
-            <DropdownMenuItem 
-              className="cursor-pointer"
-              onClick={() => navigate('/bible')}
-            >
-              <Book className="w-4 h-4 mr-2" />
-              Bible
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-popover">
+              <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
+                {user?.email}
+              </div>
+              <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive cursor-pointer">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
