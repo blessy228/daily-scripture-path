@@ -70,13 +70,21 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
     const now = new Date();
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     
+    // Helper to format date as YYYY-MM-DD in local timezone
+    const formatLocalDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
     // Build array of last 7 days ending with today
     const dailyData = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(now.getDate() - i);
       date.setHours(0, 0, 0, 0);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(date);
       
       dailyData.push({
         day: i === 0 ? "Today" : dayNames[date.getDay()],
