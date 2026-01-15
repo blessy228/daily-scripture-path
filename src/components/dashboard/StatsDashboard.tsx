@@ -4,6 +4,8 @@ import { ReadingEntry } from "@/hooks/useReadingProgress";
 import { BIBLE_BOOKS } from "@/lib/bibleData";
 import { BarChart3, BookOpen, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 interface StatsDashboardProps {
   readings: ReadingEntry[];
@@ -64,8 +66,35 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
       };
     }).filter((b) => b.read > 0);
 
-    // Weekly stats
+    // Weekly stats - calculate daily breakdown
     const now = new Date();
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    
+    // Get the start of the current week (Sunday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Initialize daily data for each day of the week
+    const dailyData = dayNames.map((name, index) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + index);
+      return {
+        day: name,
+        chapters: 0,
+        date: date.toISOString().split('T')[0],
+      };
+    });
+
+    // Fill in the chapters for each day
+    readings.forEach((reading) => {
+      const readingDate = new Date(reading.reading_date);
+      if (readingDate >= startOfWeek && readingDate <= now) {
+        const dayIndex = readingDate.getDay();
+        dailyData[dayIndex].chapters += reading.chapters_count;
+      }
+    });
+
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thisWeekReadings = readings.filter(
       (r) => new Date(r.reading_date) >= oneWeekAgo
@@ -100,6 +129,7 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
     return {
       bookProgress: bookProgress.sort((a, b) => b.percentage - a.percentage).slice(0, 10),
       thisWeekChapters,
+      dailyData,
       oldTestamentRead,
       oldTestamentTotal,
       newTestamentRead,
@@ -118,6 +148,44 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Weekly Chart */}
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm text-muted-foreground">This Week's Reading</h4>
+          <ChartContainer
+            config={{
+              chapters: {
+                label: "Chapters",
+                color: "hsl(var(--primary))",
+              },
+            }}
+            className="h-[120px] w-full"
+          >
+            <BarChart data={stats.dailyData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+              <XAxis 
+                dataKey="day" 
+                tickLine={false} 
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                tickLine={false} 
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                allowDecimals={false}
+              />
+              <ChartTooltip 
+                content={<ChartTooltipContent />}
+                cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+              />
+              <Bar 
+                dataKey="chapters" 
+                fill="hsl(var(--primary))" 
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ChartContainer>
+        </div>
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-lg bg-muted/50 text-center">
