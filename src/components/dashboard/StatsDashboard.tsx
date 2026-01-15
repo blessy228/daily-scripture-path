@@ -66,32 +66,31 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
       };
     }).filter((b) => b.read > 0);
 
-    // Weekly stats - calculate daily breakdown
+    // Weekly stats - calculate last 7 days breakdown
     const now = new Date();
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     
-    // Get the start of the current week (Sunday)
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    // Initialize daily data for each day of the week
-    const dailyData = dayNames.map((name, index) => {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + index);
-      return {
-        day: name,
+    // Build array of last 7 days ending with today
+    const dailyData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      dailyData.push({
+        day: i === 0 ? "Today" : dayNames[date.getDay()],
         chapters: 0,
-        date: date.toISOString().split('T')[0],
-      };
-    });
+        date: dateStr,
+      });
+    }
 
     // Fill in the chapters for each day
     readings.forEach((reading) => {
-      const readingDate = new Date(reading.reading_date);
-      if (readingDate >= startOfWeek && readingDate <= now) {
-        const dayIndex = readingDate.getDay();
-        dailyData[dayIndex].chapters += reading.chapters_count;
+      const readingDateStr = reading.reading_date;
+      const dayEntry = dailyData.find(d => d.date === readingDateStr);
+      if (dayEntry) {
+        dayEntry.chapters += reading.chapters_count;
       }
     });
 
