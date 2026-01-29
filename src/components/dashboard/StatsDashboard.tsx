@@ -124,12 +124,26 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
     let oldTestamentRead = 0;
     let newTestamentRead = 0;
 
+    // Calculate total books per testament
+    const oldTestamentBooksTotal = BIBLE_BOOKS.filter(b => b.testament === "old").length;
+    const newTestamentBooksTotal = BIBLE_BOOKS.filter(b => b.testament === "new").length;
+
+    // Calculate chapters read and completed books per testament
+    let oldTestamentBooksCompleted = 0;
+    let newTestamentBooksCompleted = 0;
+
     BIBLE_BOOKS.forEach((book) => {
       const readChapters = chaptersByBook.get(book.name)?.size || 0;
       if (book.testament === "old") {
         oldTestamentRead += readChapters;
+        if (readChapters === book.chapters) {
+          oldTestamentBooksCompleted++;
+        }
       } else {
         newTestamentRead += readChapters;
+        if (readChapters === book.chapters) {
+          newTestamentBooksCompleted++;
+        }
       }
     });
 
@@ -139,8 +153,12 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
       dailyData,
       oldTestamentRead,
       oldTestamentTotal,
+      oldTestamentBooksCompleted,
+      oldTestamentBooksTotal,
       newTestamentRead,
       newTestamentTotal,
+      newTestamentBooksCompleted,
+      newTestamentBooksTotal,
       booksStarted: bookProgress.length,
       booksCompleted: bookProgress.filter((b) => b.percentage === 100).length,
     };
@@ -211,30 +229,63 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
             <TrendingUp className="w-4 h-4" />
             Testament Progress
           </h4>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Old Testament</span>
-                <span className="text-muted-foreground">
-                  {stats.oldTestamentRead}/{stats.oldTestamentTotal} chapters
-                </span>
+          <div className="space-y-4">
+            {/* Old Testament */}
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Old Testament</span>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Books</span>
+                  <span className="text-muted-foreground">
+                    {stats.oldTestamentBooksCompleted}/{stats.oldTestamentBooksTotal}
+                  </span>
+                </div>
+                <Progress
+                  value={(stats.oldTestamentBooksCompleted / stats.oldTestamentBooksTotal) * 100}
+                  className="h-1.5"
+                />
               </div>
-              <Progress
-                value={(stats.oldTestamentRead / stats.oldTestamentTotal) * 100}
-                className="h-2"
-              />
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Chapters</span>
+                  <span className="text-muted-foreground">
+                    {stats.oldTestamentRead}/{stats.oldTestamentTotal}
+                  </span>
+                </div>
+                <Progress
+                  value={(stats.oldTestamentRead / stats.oldTestamentTotal) * 100}
+                  className="h-1.5"
+                />
+              </div>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>New Testament</span>
-                <span className="text-muted-foreground">
-                  {stats.newTestamentRead}/{stats.newTestamentTotal} chapters
-                </span>
+
+            {/* New Testament */}
+            <div className="space-y-2">
+              <span className="text-sm font-medium">New Testament</span>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Books</span>
+                  <span className="text-muted-foreground">
+                    {stats.newTestamentBooksCompleted}/{stats.newTestamentBooksTotal}
+                  </span>
+                </div>
+                <Progress
+                  value={(stats.newTestamentBooksCompleted / stats.newTestamentBooksTotal) * 100}
+                  className="h-1.5"
+                />
               </div>
-              <Progress
-                value={(stats.newTestamentRead / stats.newTestamentTotal) * 100}
-                className="h-2"
-              />
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Chapters</span>
+                  <span className="text-muted-foreground">
+                    {stats.newTestamentRead}/{stats.newTestamentTotal}
+                  </span>
+                </div>
+                <Progress
+                  value={(stats.newTestamentRead / stats.newTestamentTotal) * 100}
+                  className="h-1.5"
+                />
+              </div>
             </div>
           </div>
         </div>
