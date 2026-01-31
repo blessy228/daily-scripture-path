@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReadingEntry } from "@/hooks/useReadingProgress";
 import { BIBLE_BOOKS } from "@/lib/bibleData";
-import { BarChart3, BookOpen, TrendingUp } from "lucide-react";
+import { BarChart3, BookOpen, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
@@ -152,9 +152,11 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
       .filter((b) => b.percentage > 0 && b.percentage < 100)
       .sort((a, b) => b.percentage - a.percentage);
     
+    // Get completed books in biblical order
+    const biblicalOrder = BIBLE_BOOKS.map(b => b.name);
     const completedBooks = bookProgress
       .filter((b) => b.percentage === 100)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => biblicalOrder.indexOf(a.name) - biblicalOrder.indexOf(b.name));
 
     return {
       bookProgress: bookProgress.sort((a, b) => b.percentage - a.percentage).slice(0, 10),
@@ -324,6 +326,29 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
                   <p className="text-xs text-muted-foreground truncate">
                     Ch. {book.chapterRanges}
                   </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Completed Books */}
+        {stats.completedBooks.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-accent" />
+              Completed ({stats.completedBooks.length})
+            </h4>
+            <div className="space-y-1.5">
+              {stats.completedBooks.map((book) => (
+                <div 
+                  key={book.name} 
+                  className="flex justify-between items-center py-1.5 px-3 rounded-md bg-accent/10 border border-accent/20"
+                >
+                  <span className="text-sm font-medium">{book.name}</span>
+                  <span className="text-sm text-accent font-medium">
+                    ({book.chapters}/{book.chapters}) Completed!
+                  </span>
                 </div>
               ))}
             </div>
