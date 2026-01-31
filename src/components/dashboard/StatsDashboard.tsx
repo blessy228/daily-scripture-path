@@ -147,8 +147,19 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
       }
     });
 
+    // Separate in-progress and completed books
+    const inProgressBooks = bookProgress
+      .filter((b) => b.percentage > 0 && b.percentage < 100)
+      .sort((a, b) => b.percentage - a.percentage);
+    
+    const completedBooks = bookProgress
+      .filter((b) => b.percentage === 100)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     return {
       bookProgress: bookProgress.sort((a, b) => b.percentage - a.percentage).slice(0, 10),
+      inProgressBooks,
+      completedBooks,
       thisWeekChapters,
       dailyData,
       oldTestamentRead,
@@ -290,19 +301,19 @@ export function StatsDashboard({ readings, chaptersRead, totalChapters }: StatsD
           </div>
         </div>
 
-        {/* Top Books */}
-        {stats.bookProgress.length > 0 && (
+        {/* In-Progress Books */}
+        {stats.inProgressBooks.length > 0 && (
           <div className="space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Book Progress
+              In Progress ({stats.inProgressBooks.length})
             </h4>
             <div className="space-y-2">
-              {stats.bookProgress.map((book) => (
+              {stats.inProgressBooks.slice(0, 8).map((book) => (
                 <div key={book.name} className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="truncate">{book.name}</span>
-                    <span className={book.percentage === 100 ? "text-success font-medium" : "text-muted-foreground"}>
+                    <span className="text-muted-foreground">
                       {book.read}/{book.chapters} ({book.percentage}%)
                     </span>
                   </div>
